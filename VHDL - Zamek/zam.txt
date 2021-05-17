@@ -1,0 +1,107 @@
+library IEEE;
+use IEEE.STD_LOGIC_1164.ALL;
+
+entity zam is
+    Port ( clk : in  STD_LOGIC;
+           ce : in  STD_LOGIC;
+           reset : in  STD_LOGIC;
+           error : out  STD_LOGIC;
+           cislo : in  STD_LOGIC_VECTOR (3 downto 0);
+           zamek : out  STD_LOGIC);
+end zam;
+
+architecture Behavioral of zam is
+
+type state_type is (st_close, st_1, st_2, st_3, st_open, st_error);
+signal state, next_state : state_type;
+
+begin
+
+   SYNC_PROC: process (clk)
+   begin
+      if (clk'event and clk = '1') then
+         if (reset = '1') then
+            state <= st_close;
+         else 
+         	if (ce = '1') then
+            	state <= next_state;
+			end if;
+         end if;        
+      end if;
+   end process;
+	
+   OUTPUT_DECODE: process (state)
+   begin
+      if (state = st_open) then
+         	zamek <= '1';
+			error <= '0';
+      elsif (state = st_error) then
+			zamek <= '0';
+			error <= '1';
+      else
+			zamek <= '0';
+			error <= '0';
+      end if;
+   end process;
+	
+   NEXT_STATE_DECODE: process (state, cislo)
+   begin
+      next_state <= state;
+		
+      case (state) is
+         when st_close =>
+            if (cislo = "0100") then
+                next_state <= st_1;
+			elsif (cislo = "0000") then
+				next_state <= state;
+			else
+				next_state <= st_error;
+            end if;
+
+         when st_1 =>
+            if (cislo = "0001") then
+                next_state <= st_2;
+			elsif (cislo = "0000") then
+				next_state <= state;
+			else
+				next_state <= st_error;
+            end if;
+
+         when st_2 =>
+            if (cislo = "0010") then
+                next_state <= st_3;
+			elsif (cislo = "0000") then
+				next_state <= state;
+			else
+				next_state <= st_error;
+            end if;
+
+         when st_3 =>
+            if (cislo = "1000") then
+                next_state <= st_open;
+			elsif (cislo = "0000") then
+				next_state <= state;
+			else
+				next_state <= st_error;
+            end if;
+
+         when st_open =>
+            if (cislo = "0000") then
+				next_state <= state;
+			else
+				next_state <= st_close;
+            end if;
+
+         when st_error =>
+            if (cislo = "0000") then
+				next_state <= st_error;
+			else
+				next_state <= st_close;
+            end if;
+				
+         when others => null;
+      end case;      
+   end process;
+
+end Behavioral;
+

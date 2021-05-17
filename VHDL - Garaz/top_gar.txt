@@ -1,0 +1,66 @@
+library IEEE;
+use IEEE.STD_LOGIC_1164.ALL;
+
+entity top_gar is
+    Port ( sw0 : in  STD_LOGIC;
+           mclk : in  STD_LOGIC;
+           btn0 : in  STD_LOGIC;
+           btn1 : in  STD_LOGIC;
+           seg : out  STD_LOGIC_VECTOR (6 downto 0);
+           led0 : out  STD_LOGIC;
+           an : out  STD_LOGIC_VECTOR (3 downto 0));
+end top_gar;
+
+architecture Behavioral of top_gar is
+
+ signal ce1,p,o : STD_LOGIC;
+ signal cislo : STD_LOGIC_VECTOR (2 downto 0);
+
+begin
+
+	Inst_puls: entity puls PORT MAP(
+		clk => mclk,
+		pulse => ce1
+	);
+	
+	Inst_debouncer1: entity debouncer PORT MAP(
+		clk => mclk,
+		ce => ce1,
+		btn_in => btn0,
+		btn_posedge => p
+	);
+	
+	Inst_debouncer2: entity debouncer PORT MAP(
+		clk => mclk,
+		ce => ce1,
+		btn_in => btn1,
+		btn_posedge => o
+	);
+	
+	Inst_garazSrc: entity garazSrc PORT MAP(
+		clk => mclk,
+		reset => sw0,
+		p => p,
+		o => o,
+		ce1 => ce1,
+		semafor => led0,
+		stav => cislo
+	);
+	
+	an(3 downto 0) <= "1110";
+	-- Nebo pouziju 
+	-- an(0) <= '1';
+	-- an(1) <= '1';
+	-- an(2) <= '1';
+	-- an(3) <= '0';
+	
+	with cislo SELect
+   seg <= "1111001" when "001",  --1
+          "0100100" when "010",  --2
+          "0110000" when "011",  --3
+          "0011001" when "100",  --4
+          "0010010" when "101",  --5
+          "1000000" when others; --0
+
+end Behavioral;
+
